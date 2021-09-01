@@ -94,7 +94,6 @@ func (srv *server) Start() error {
 	srv.running = true
 	// Peer to peer session entity
 	srv.addpeer = make(chan *peerConn)
-	// 创建对等网络 Bert1
 	srv.delpeer = make(chan Peer)
 	var err error
 	// launch node discovery and UDP listener
@@ -114,7 +113,6 @@ func (srv *server) Start() error {
 		return err
 	}
 
-	// 网络地址 bert2
 	go srv.run(dialer)
 	srv.running = true
 	return nil
@@ -134,11 +132,9 @@ func (srv *server) run(dialer *dialstate) {
 		}
 	}
 
-	// 执行任务
 	scheduleTasks := func(new []task) {
 		pt := append(pendingTasks, new...)
 		start := 16 - len(tasks)
-		// 预备队列长度小于开始长度
 		if len(pt) < start {
 			start = len(pt)
 		}

@@ -44,7 +44,6 @@ func (c *peerConn) serve() {
 		}
 	}
 	c.logger.Infof("p2p handshake success by %s", fromAddr)
-	// 加入节点p2pserver 节点
 	c.server.addpeer <- c
 }
 
@@ -61,12 +60,10 @@ func (c *peerConn) clientHandshake() error {
 		receiveId: c.id,
 	}
 	c.logger.Debugf("send hello request version: %d, id: %s, to receiveId: %s", c.version,c.self, c.id)
-	// send data 发送消息
 	_, err := c.rw.Write(request.marshal())
 	if err != nil {
 		return err
 	}
-	// Read reply data 读取消息
 	hello, err := c.readHelloReRequestMsg()
 
 	if err != nil {
@@ -95,7 +92,6 @@ func (c *peerConn) serverHandshake() error {
 	}
 
 	// Read reply data
-	// 获取接收到的数据
 	hello, err := c.readHelloRequestMsg()
 	if err != nil {
 		return err
@@ -118,7 +114,6 @@ func (c *peerConn) serverHandshake() error {
 		receiveId: hello.id,
 		version:   c.version,
 	}
-	// 回复
 	c.logger.Debugf("send handshake reply to nodeId %s", reply.receiveId)
 	if _, err = c.rw.Write(reply.marshal()); err != nil {
 		return err
