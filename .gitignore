@@ -1,0 +1,13 @@
+.idea/
+**/.DS_Store
+*.db
+*.db.lock
+
+# badger db files
+*.sst
+*.vlog
+*.mem
+DISCARD
+KEYREGISTRY
+LOCK
+MANIFEST
