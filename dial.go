@@ -129,7 +129,7 @@ type discoverTable interface {
 }
 
 func newDialState(static []*discover.Node, table discoverTable, maxdyn int) *dialstate {
-	d := &dialstate{
+	ds := &dialstate{
 		ntab: table,
 		maxDynDials: maxdyn,
 		static: make(map[discover.NodeId]*discover.Node),
@@ -138,81 +138,81 @@ func newDialState(static []*discover.Node, table discoverTable, maxdyn int) *dia
 		hist: new(dialHistory),
 	}
 	for _, a := range static {
-		d.static[a.ID] = a
+		ds.static[a.ID] = a
 	}
-	return d
+	return ds
 }
-func (d *dialstate) newTasks(nRunning int, peers map[discover.NodeId]Peer, now time.Time) []task {
+func (ds *dialstate) newTasks(nRunning int, peers map[discover.NodeId]Peer, now time.Time) []task {
 	var tasks []task
 	addDial := func(flag int, n *discover.Node) bool {
 		//the connection established needn't to join the pool
-		_, dialing := d.dialing[n.ID]
-		if dialing ||  peers[n.ID] != nil || d.hist.contains(n.ID) {
+		_, dialing := ds.dialing[n.ID]
+		if dialing ||  peers[n.ID] != nil || ds.hist.contains(n.ID) {
 			return false
 		}
-		d.dialing[n.ID] = flag
+		ds.dialing[n.ID] = flag
 		tasks = append(tasks, &dialtask{
 			flag: flag,
 			dest:   n,
 		})
 		return true
 	}
-	needDynDials := d.maxDynDials
+	needDynDials := ds.maxDynDials
 	for _,p := range peers {
 		if p.Is(flagDynamic) {
 			needDynDials -= 1
 		}
 	}
-	for _,flag := range d.dialing {
+	for _,flag := range ds.dialing {
 		if flag&flagDynamic != 0 {
 			needDynDials -= 1
 		}
 	}
-	d.hist.expire(now)
+	ds.hist.expire(now)
 
-	for _, n := range d.static {
+	for _, n := range ds.static {
 		addDial(flagOutbound|flagStatic, n)
 	}
 	randomCandidates := needDynDials / 2
-	if randomCandidates > 0 && d.bootstrapped {
-		n := d.ntab.ReadRandomNodes(d.randomNodes)
+	if randomCandidates > 0 && ds.bootstrapped {
+		n := ds.ntab.ReadRandomNodes(ds.randomNodes)
 		for i := 0; i < randomCandidates && i < n; i++ {
-			if addDial(flagOutbound|flagDynamic, d.randomNodes[i]) {
+			if addDial(flagOutbound|flagDynamic, ds.randomNodes[i]) {
 				needDynDials--
 			}
 		}
 	}
 	i := 0
-	for ; i < len(d.lookupBuf) && needDynDials > 0; i++ {
-		if addDial(flagOutbound|flagDynamic, d.lookupBuf[i]) {
+	for ; i < len(ds.lookupBuf) && needDynDials > 0; i++ {
+		if addDial(flagOutbound|flagDynamic, ds.lookupBuf[i]) {
 			needDynDials--
 		}
 	}
-	d.lookupBuf = d.lookupBuf[:copy(d.lookupBuf, d.lookupBuf[i:])]
-	if len(d.lookupBuf) < needDynDials && !d.lookupRunning {
-		d.lookupRunning = true
-		tasks = append(tasks, &discoverTask{bootstrap: !d.bootstrapped})
+	ds.lookupBuf = ds.lookupBuf[:copy(ds.lookupBuf, ds.lookupBuf[i:])]
+	if len(ds.lookupBuf) < needDynDials && !ds.lookupRunning {
+		ds.lookupRunning = true
+		tasks = append(tasks, &discoverTask{bootstrap: !ds.bootstrapped})
 	}
 
-	if nRunning == 0 && len(tasks) == 0 && d.hist.Len() > 0 {
-		t := &waitExpireTask{d.hist.min().exp.Sub(now)}
+	if nRunning == 0 && len(tasks) == 0 && ds.hist.Len() > 0 {
+		t := &waitExpireTask{ds.hist.min().exp.Sub(now)}
 		tasks = append(tasks, t)
 	}
 	return tasks
 }
 
 
-func (d *dialstate) taskDone(t task, now time.Time) {
+func (ds *dialstate) taskDone(t task, now time.Time) {
 	switch mt := t.(type) {
 	case *discoverTask:
 		if mt.bootstrap {
-			d.bootstrapped = true
+			ds.bootstrapped = true
 		}
-		d.lookupRunning = false
-		d.lookupBuf = append(d.lookupBuf, mt.result...)
+		ds.lookupRunning = false
+		ds.lookupBuf = append(ds.lookupBuf, mt.result...)
 	case *dialtask:
-		d.hist.add(mt.dest.ID, now.Add(dialHistoryExpiration))
-		delete(d.dialing, mt.dest.ID)
+		ds.hist.add(mt.dest.ID, now.Add(dialHistoryExpiration))
+		delete(ds.dialing, mt.dest.ID)
 	}
 }
 
