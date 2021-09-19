@@ -16,6 +16,7 @@ import (
 	p2p "xlibp2p"
 	"xlibp2p/crypto"
 	"xlibp2p/discover"
+	"xlibp2p/nat"
 )
 
 type chatProtocol struct {
@@ -70,13 +71,15 @@ var (
 	datadir string
 	help bool
 	bootstrap string
+	static string
 	maxPeers int
 )
 
 func init() {
-	flag.StringVar(&addr, "addr", ":9093", "set listen address")
+	flag.StringVar(&addr, "addr", ":", "set listen address")
 	flag.StringVar(&datadir, "datadir", "", "set data dir path (default: random folder in current path)")
 	flag.StringVar(&bootstrap, "bootstrap", "", "set bootstrap nodes")
+	flag.StringVar(&static, "static", "", "set static nodes")
 	flag.IntVar(&maxPeers, "maxpeers", 10,"set bootstrap nodes")
 	flag.BoolVar(&help, "help", false, "this help")
 }
@@ -102,7 +105,7 @@ func randomDataDir() string {
 	}
 	return p
 }
-func parseBootstrap(s string) []*discover.Node {
+func resolveNodeUris(s string) []*discover.Node {
 	if s == "" {
 		return nil
 	}
@@ -158,9 +161,11 @@ func main() {
 	logger := logrus.StandardLogger()
 	logger.SetLevel(logrus.InfoLevel)
 	key := crypto.MustGenPrvKey()
-	bootNodes := parseBootstrap(bootstrap)
+	bootNodes := resolveNodeUris(bootstrap)
+	ss := resolveNodeUris(static)
 	srv := p2p.NewServer(p2p.Config{
-		ProtocolVersion: 1,
+		Nat: nat.Any(),
+		StaticNodes: ss,
 		ListenAddr: addr,
 		Key: key,
 		BootstrapNodes: bootNodes,
@@ -180,6 +185,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
+	srv.Stop()
 	if err := os.RemoveAll(datadir); err != nil {
 		panic(err)
 	}

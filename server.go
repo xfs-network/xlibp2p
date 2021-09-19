@@ -8,6 +8,7 @@ import (
 	"time"
 	"xlibp2p/discover"
 	"xlibp2p/log"
+	"xlibp2p/nat"
 )
 
 const (
@@ -36,7 +37,7 @@ type server struct {
 	//protocols contains the protocols supported by the server.
 	//Matching protocols are launched for each peer.
 	protocols []Protocol
-
+	close chan struct{}
 	addpeer chan *peerConn
 	delpeer chan Peer
 	table *discover.Table
@@ -46,7 +47,7 @@ type server struct {
 
 // Config Background network service configuration
 type Config struct {
-	ProtocolVersion uint8
+	Nat nat.Mapper
 	ListenAddr      string
 	Key             *ecdsa.PrivateKey
 	Discover bool
@@ -80,7 +81,25 @@ func (srv *server) Bind(p Protocol) {
 
 // Stop background network function
 func (srv *server) Stop() {
+	close(srv.close)
+	srv.table.Close()
+}
 
+type udpcnn interface {
+	LocalAddr() net.Addr
+}
+
+func (srv *server) listenUDP() (*discover.Table, udpcnn, error ) {
+	addr, err := net.ResolveUDPAddr("udp", srv.config.ListenAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		return nil, nil, err
+	}
+	table, _ := discover.NewUDP(srv.config.Key, conn, srv.config.NodeDBPath, srv.config.Nat)
+	return table, conn, nil
 }
 
 // Start start running the server.
@@ -95,13 +114,16 @@ func (srv *server) Start() error {
 	// Peer to peer session entity
 	srv.addpeer = make(chan *peerConn)
 	srv.delpeer = make(chan Peer)
+	srv.close = make(chan struct{})
 	var err error
+	var uconn udpcnn = nil
 	// launch node discovery and UDP listener
 	if srv.config.Discover {
-		srv.table, err = discover.ListenUDP(srv.config.Key, srv.config.ListenAddr, srv.config.NodeDBPath)
+		srv.table, uconn, err = srv.listenUDP()
 		if err != nil {
 			return err
 		}
+
 	}
 	dynPeers := srv.config.MaxPeers / 2
 	if !srv.config.Discover {
@@ -109,7 +131,8 @@ func (srv *server) Start() error {
 	}
 	dialer := newDialState(srv.config.StaticNodes, srv.table, dynPeers)
 	// launch TCP listener to accept connection
-	if err = srv.listenAndServe(); err != nil {
+	realaddr := uconn.LocalAddr().(*net.UDPAddr)
+	if err = srv.listenAndServe(realaddr.Port); err != nil {
 		return err
 	}
 
@@ -180,20 +203,30 @@ func (srv *server) runPeer(peer Peer) {
 	srv.delpeer <- peer
 }
 
-func (srv *server) listenAndServe() error {
-	addr := srv.config.ListenAddr
-	ln, err := net.Listen("tcp", addr)
+func (srv *server) listenAndServe(realPort int) error {
+	addr, err := net.ResolveTCPAddr("tcp", srv.config.ListenAddr)
+	addr.Port = realPort
+	ln, err := net.ListenTCP("tcp", addr)
+	laddr := ln.Addr().(*net.TCPAddr)
 	if err != nil {
-		srv.logger.Errorf("p2p server listen and serve on %s err: %v", addr, err)
+		srv.logger.Errorf("p2p listen and serve on %s err: %v", laddr, err)
 		return err
 	}
-	srv.logger.Infof("p2p server listen and serve on %s", addr)
+	srv.logger.Infof("p2p listen and serve on %s", laddr)
 	currentKey := srv.config.Key
 	nId := discover.PubKey2NodeId(currentKey.PublicKey)
 	//tcpAddr,_ := net.ResolveTCPAddr("", addr)
 	//n := discover.NewNode(tcpAddr.IP, uint16(tcpAddr.Port), uint16(tcpAddr.Port),nId)
 	srv.logger.Infof("p2p server node id: %s", nId)
 	go srv.listenLoop(ln)
+	if !laddr.IP.IsLoopback() && srv.config.Nat != nil {
+		//srv.loopWG.Add(1)
+		go func() {
+			srv.logger.Infof("nat mapping \"xlibp2p server\" port: %d", laddr.Port)
+			nat.Map(srv.config.Nat, srv.close, "tcp", laddr.Port, laddr.Port, "xlibp2p server")
+			//srv.loopWG.Done()
+		}()
+	}
 	return nil
 }
 
@@ -226,7 +259,7 @@ func (srv *server) newPeerConn(rw net.Conn, flag int, dst *discover.NodeId) *pee
 		server:  srv,
 		key:     srv.config.Key,
 		rw:      rw,
-		version: srv.config.ProtocolVersion,
+		version: version1,
 	}
 	if dst != nil {
 		c.id = *dst
