@@ -69,11 +69,7 @@ func Test_dialtask_newDialState(t *testing.T) {
 	for {
 		now := time.Now()
 		ts := ds.newTasks(1,ps,now)
-		for _, tt := range ts {
-			tt.Do(nil)
-			ds.taskDone(tt,now)
-		}
-		time.Sleep(10 * time.Second)
+		t.Logf("ts len: %d", len(ts))
 	}
 
 
