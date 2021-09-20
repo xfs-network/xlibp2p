@@ -8,14 +8,19 @@ performant, secure, and cross-platform across multitudes
 of devices by making use of a small amount of well-tested,
 production-grade dependencies.
 
-## Setup
+## Usage
 
-xlibp2p was intended to be used in Go projects that utilize Go modules. You may incorporate noise into your project as 
+xlibp2p was intended to be used in Go projects that utilize Go modules. You may incorporate xlibp2p into your project as 
 a library dependency by executing the following:
 
 ```shell
 go get -u https://github.com/xfs-network/xlibp2p.git
 ```
+
+## Examples
+
+In [examples folder](examples), you can find a chat example to help you get started in using xlibp2p. 
+The example helping you expand your knowledge about xlibp2p and p2p networks in general.
 
 ### Contribute
 
