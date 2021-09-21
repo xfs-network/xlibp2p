@@ -18,7 +18,6 @@ type (
 )
 
 var (
-	ZeroHash        = Bytes2Hash([]byte{})
 	AddrCheckSumLen = 4
 )
 
@@ -60,13 +59,8 @@ func (h *Hash) Bytes() []byte {
 }
 
 func IsZeroHash(h Hash) bool {
-	// z := make([]byte, hashLen)
-	// if bytes.Compare(h.Bytes(), z[:]) == Zero {
-	// 	return true
-	// }
-	// return false
 	var z [hashLen]byte
-	return bytes.Compare(h.Bytes(), z[:]) == Zero
+	return bytes.Equal(h.Bytes(), z[:])
 }
 
 func Bytes2Address(b []byte) Address {
@@ -126,7 +120,7 @@ func (a *Address) B58String() string {
 }
 
 func (a *Address) Equals(b Address) bool {
-	return bytes.Compare(a.Bytes(), b.Bytes()) == Zero
+	return bytes.Equal(a.Bytes(), b.Bytes())
 }
 
 func (h *Hash) MarshalJSON() ([]byte, error) {
