@@ -56,6 +56,7 @@ type Config struct {
 	BootstrapNodes []*discover.Node
 	MaxPeers int
 	Logger log.Logger
+	encoder encoder
 }
 
 // NewServer Creates background service object
@@ -183,7 +184,7 @@ func (srv *server) run(dialer *dialstate) {
 		select {
 		// add peer
 		case c := <-srv.addpeer:
-			p := newPeer(c, srv.protocols)
+			p := newPeer(c, srv.protocols, srv.config.encoder)
 			peers[c.id] = p
 			srv.logger.Infof("save peer id to peers: %s", c.id)
 			go srv.runPeer(p)

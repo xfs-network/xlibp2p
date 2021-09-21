@@ -39,7 +39,7 @@ type peer struct {
 }
 
 // create peer [Peer to peer connection session,Network protocol]
-func newPeer(conn *peerConn, ps []Protocol) Peer {
+func newPeer(conn *peerConn, ps []Protocol, en encoder) Peer {
 	p := &peer{
 		conn:  conn,
 		id:    conn.id,
@@ -49,6 +49,7 @@ func newPeer(conn *peerConn, ps []Protocol) Peer {
 		close: make(chan struct{}),
 		quit:  make(chan struct{}),
 		psCh:  make(chan MessageReader),
+		encoder: en,
 	}
 	now := time.Now()
 	p.lastTime = now.Unix()
