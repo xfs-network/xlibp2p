@@ -6,7 +6,6 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/xfs-network/xlibp2p/common/rawencode"
 	"github.com/xfs-network/xlibp2p/nat"
 	"io"
@@ -154,10 +153,8 @@ func newUDP(priv *ecdsa.PrivateKey, c conn, nodeDBPath string, mapper nat.Mapper
 	}
 	realaddr := c.LocalAddr().(*net.UDPAddr)
 	if mapper != nil && !realaddr.IP.IsLoopback() {
-		logrus.Infof("nat mapping \"xlibp2p discovery\" port: %d", realaddr.Port)
 		go nat.Map(mapper, udp.closing, "udp", realaddr.Port, realaddr.Port, "xlibp2p discovery")
 	}else if mapper != nil {
-		logrus.Infof("nat mapping local \"xlibp2p discovery\" port: %d", realaddr.Port)
 		if ext, err := mapper.ExternalIP(); err == nil {
 			realaddr = &net.UDPAddr{IP: ext, Port: realaddr.Port}
 		}
