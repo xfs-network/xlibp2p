@@ -3,12 +3,12 @@ package discover
 import (
 	"bytes"
 	"encoding/binary"
+	"github.com/xfs-network/xlibp2p/common/rawencode"
+	"github.com/xfs-network/xlibp2p/crypto"
+	"github.com/xfs-network/xlibp2p/storage/badger"
 	"os"
 	"sync"
 	"time"
-	"xlibp2p/common/rawencode"
-	"xlibp2p/crypto"
-	"xlibp2p/storage/badger"
 )
 
 type nodeDB struct {

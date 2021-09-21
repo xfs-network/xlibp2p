@@ -3,8 +3,8 @@ package crypto
 import (
 	"errors"
 	"fmt"
+	"github.com/xfs-network/xlibp2p/common"
 	"testing"
-	"xlibp2p/common"
 )
 
 func TestPubKey2Addr(t *testing.T) {

@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"github.com/xfs-network/xlibp2p/common/rawencode"
+	"github.com/xfs-network/xlibp2p/nat"
 	"io"
 	"net"
 	"time"
-	"xlibp2p/common/rawencode"
-	"xlibp2p/nat"
 )
 
 const Version = 4

@@ -2,11 +2,11 @@ package p2p
 
 import (
 	"bytes"
+	"github.com/xfs-network/xlibp2p/discover"
+	"github.com/xfs-network/xlibp2p/log"
 	"io"
 	"net"
 	"time"
-	"xlibp2p/discover"
-	"xlibp2p/log"
 )
 
 type encoder interface {

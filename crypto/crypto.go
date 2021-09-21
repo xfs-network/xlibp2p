@@ -6,9 +6,9 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	"xlibp2p/common"
-	"xlibp2p/common/ahash"
-	"xlibp2p/common/urlsafeb64"
+	"github.com/xfs-network/xlibp2p/common"
+	"github.com/xfs-network/xlibp2p/common/ahash"
+	"github.com/xfs-network/xlibp2p/common/urlsafeb64"
 )
 
 func GenPrvKey() (*ecdsa.PrivateKey, error) {

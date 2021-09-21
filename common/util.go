@@ -3,9 +3,9 @@ package common
 import (
 	"bytes"
 	"errors"
+	"github.com/xfs-network/xlibp2p/common/ahash"
+	"github.com/xfs-network/xlibp2p/common/rawencode"
 	"math"
-	"xlibp2p/common/ahash"
-	"xlibp2p/common/rawencode"
 )
 
 func ObjSHA256(obj rawencode.RawEncoder) ([]byte, []byte, error) {

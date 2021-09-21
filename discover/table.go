@@ -3,12 +3,12 @@ package discover
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"github.com/xfs-network/xlibp2p/common"
+	"github.com/xfs-network/xlibp2p/crypto"
 	"net"
 	"sort"
 	"sync"
 	"time"
-	"xlibp2p/common"
-	"xlibp2p/crypto"
 )
 
 const (

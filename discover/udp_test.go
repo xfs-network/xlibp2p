@@ -2,10 +2,10 @@ package discover
 
 import (
 	"bytes"
+	"github.com/xfs-network/xlibp2p/crypto"
 	"net"
 	"testing"
 	"time"
-	"xlibp2p/crypto"
 )
 
 

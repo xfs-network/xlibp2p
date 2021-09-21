@@ -6,6 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	p2p "github.com/xfs-network/xlibp2p"
+	"github.com/xfs-network/xlibp2p/crypto"
+	"github.com/xfs-network/xlibp2p/discover"
+	"github.com/xfs-network/xlibp2p/nat"
 	"io"
 	"math/rand"
 	"os"
@@ -13,10 +17,6 @@ import (
 	"path"
 	"runtime"
 	"strings"
-	p2p "xlibp2p"
-	"xlibp2p/crypto"
-	"xlibp2p/discover"
-	"xlibp2p/nat"
 )
 
 type chatProtocol struct {

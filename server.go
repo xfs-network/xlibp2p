@@ -3,12 +3,12 @@ package p2p
 import (
 	"crypto/ecdsa"
 	"errors"
+	"github.com/xfs-network/xlibp2p/discover"
+	"github.com/xfs-network/xlibp2p/log"
+	"github.com/xfs-network/xlibp2p/nat"
 	"net"
 	"sync"
 	"time"
-	"xlibp2p/discover"
-	"xlibp2p/log"
-	"xlibp2p/nat"
 )
 
 const (

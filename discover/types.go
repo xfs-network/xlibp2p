@@ -1,9 +1,9 @@
 package discover
 
 import (
+	"github.com/xfs-network/xlibp2p/crypto"
 	"net"
 	"time"
-	"xlibp2p/crypto"
 )
 
 var maxNeighbors int = 1024

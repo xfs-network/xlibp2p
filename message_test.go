@@ -1,9 +1,9 @@
 package p2p
 
 import (
+	"github.com/xfs-network/xlibp2p/crypto"
+	"github.com/xfs-network/xlibp2p/discover"
 	"testing"
-	"xlibp2p/crypto"
-	"xlibp2p/discover"
 )
 
 func TestHello(t *testing.T) {

@@ -6,10 +6,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/xfs-network/xlibp2p/discover"
+	"github.com/xfs-network/xlibp2p/log"
 	"io/ioutil"
 	"net"
-	"xlibp2p/discover"
-	"xlibp2p/log"
 )
 
 // Peer to peer connection session

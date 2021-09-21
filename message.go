@@ -3,8 +3,8 @@ package p2p
 import (
 	"bytes"
 	"encoding/binary"
+	"github.com/xfs-network/xlibp2p/discover"
 	"io"
-	"xlibp2p/discover"
 )
 
 const headerLen = 6

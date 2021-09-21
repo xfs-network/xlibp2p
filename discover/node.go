@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/xfs-network/xlibp2p/common"
+	"github.com/xfs-network/xlibp2p/crypto"
 	"net"
 	"net/url"
 	"strconv"
 	"strings"
-	"xlibp2p/common"
-	"xlibp2p/crypto"
 )
 
 

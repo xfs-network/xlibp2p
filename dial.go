@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"container/heap"
 	"crypto/rand"
+	"github.com/xfs-network/xlibp2p/discover"
 	"net"
 	"time"
-	"xlibp2p/discover"
 )
 const (
 	// This is the amount of time spent waiting in between

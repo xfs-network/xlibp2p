@@ -1,4 +1,4 @@
-module xlibp2p
+module github.com/xfs-network/xlibp2p
 
 go 1.16
 
