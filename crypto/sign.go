@@ -7,8 +7,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"github.com/xfs-network/xlibp2p/common"
 	"math/big"
-	"xlibp2p/common"
 )
 
 func ECDSASign2Hex(hash []byte, prv *ecdsa.PrivateKey) (string, error) {

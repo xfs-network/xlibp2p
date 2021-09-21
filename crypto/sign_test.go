@@ -4,8 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"github.com/xfs-network/xlibp2p/common/ahash"
 	"testing"
-	"xlibp2p/common/ahash"
 )
 
 func TestSign(t *testing.T) {
