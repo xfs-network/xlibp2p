@@ -14,7 +14,7 @@ xlibp2p was intended to be used in Go projects that utilize Go modules. You may 
 a library dependency by executing the following:
 
 ```shell
-go get -u https://github.com/xfs-network/xlibp2p.git
+go get -u github.com/xfs-network/xlibp2p
 ```
 
 ## Examples

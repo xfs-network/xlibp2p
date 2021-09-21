@@ -9,8 +9,8 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
-	github.com/huin/goupnp v1.0.2 // indirect
-	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
+	github.com/huin/goupnp v1.0.2
+	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/klauspost/compress v1.13.4 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	go.opencensus.io v0.23.0 // indirect
