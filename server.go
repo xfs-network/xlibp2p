@@ -21,6 +21,8 @@ const (
 
 
 type Server interface {
+	Node() *discover.Node
+	NodeId() discover.NodeId
 	Peers() []Peer
 	AddPeer(node *discover.Node)
 	RemovePeer(node discover.NodeId)
@@ -35,6 +37,8 @@ type Server interface {
 // You should set them before starting the Server. Fields may not be
 // modified while the server is running.
 type server struct {
+	nodeId discover.NodeId
+	node *discover.Node
 	config Config
 	mu     sync.Mutex
 	running bool
@@ -75,6 +79,8 @@ func NewServer(config Config) Server {
 	if config.Logger == nil {
 		srv.logger = log.DefaultLogger()
 	}
+	currentKey := srv.config.Key
+	srv.nodeId = discover.PubKey2NodeId(currentKey.PublicKey)
 	return srv
 }
 
@@ -234,16 +240,14 @@ func (srv *server) listenAndServe(realPort int) error {
 		return err
 	}
 	srv.logger.Infof("p2p listen and serve on %s", laddr)
-	currentKey := srv.config.Key
-	nId := discover.PubKey2NodeId(currentKey.PublicKey)
-	//tcpAddr,_ := net.ResolveTCPAddr("", addr)
-	//n := discover.NewNode(tcpAddr.IP, uint16(tcpAddr.Port), uint16(tcpAddr.Port),nId)
-	srv.logger.Infof("p2p server node id: %s", nId)
+
+	srv.node = discover.NewNode(addr.IP, uint16(addr.Port), uint16(addr.Port), srv.nodeId)
+	srv.logger.Infof("p2p server node id: %s", srv.nodeId)
 	go srv.listenLoop(ln)
 	if !laddr.IP.IsLoopback() && srv.config.Nat != nil {
 		//srv.loopWG.Add(1)
 		go func() {
-			srv.logger.Infof("nat mapping \"xlibp2p server\" port: %d", laddr.Port)
+			srv.logger.Debugf("nat mapping \"xlibp2p server\" port: %d", laddr.Port)
 			nat.Map(srv.config.Nat, srv.close, "tcp", laddr.Port, laddr.Port, "xlibp2p server")
 			//srv.loopWG.Done()
 		}()
@@ -284,6 +288,14 @@ func (srv *server) Peers() []Peer {
 
 func (srv *server) RemovePeer(nId discover.NodeId) {
 	srv.rmstatic <- nId
+}
+
+func (srv *server) NodeId() discover.NodeId {
+	return srv.nodeId
+}
+
+func (srv *server) Node() *discover.Node {
+	return srv.node
 }
 
 func (srv *server) newPeerConn(rw net.Conn, flag int, dst *discover.NodeId) *peerConn {

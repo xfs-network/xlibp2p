@@ -150,10 +150,6 @@ func chat(cp *chatProtocol, txt string) {
 		cs := strings.Split(txt[1:], " ")
 		command := cs[0]
 		if command == "peers" {
-			//ps := cp.server.Peers()
-			//for _,p := range ps {
-			//	fmt.Printf("peer id: %s\n", p.ID())
-			//}
 			for pId,_ := range cp.ps {
 				fmt.Printf("peer id: %s\n", pId)
 			}
@@ -162,14 +158,24 @@ func chat(cp *chatProtocol, txt string) {
 			n, err := discover.ParseNode(cs[1])
 			if err != nil {
 				fmt.Println("addperr err: ", err)
+				return
 			}
 			cp.server.AddPeer(n)
+			return
 		}else if command == "rmpeer" && len(cs) == 2 && cs[1] != "" {
-			//n, err := discover.ParseNode(cs[1])
-			//if err != nil {
-			//	fmt.Println("rmperr err: ", err)
-			//}
-			//cp.server.RemovePeer(n)
+			nid,err := discover.Hex2NodeId(cs[1])
+			if err != nil {
+				fmt.Println("rmperr err: ", err)
+				return
+			}
+			cp.server.RemovePeer(nid)
+			return
+		}else if command == "info" {
+			node := cp.server.Node()
+			nId := node.ID
+			fmt.Printf("nodeId: %s\n", nId)
+			fmt.Printf("connect url: %s\n", node)
+			return
 		}
 	}
 	cp.sendMessage(txt)
