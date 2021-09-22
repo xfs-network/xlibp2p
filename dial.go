@@ -137,11 +137,19 @@ func newDialState(static []*discover.Node, table discoverTable, maxdyn int) *dia
 		randomNodes: make([]*discover.Node, maxdyn/2),
 		hist: new(dialHistory),
 	}
-	for _, a := range static {
-		ds.static[a.ID] = a
+	for _, n := range static {
+		ds.addStatic(n)
 	}
 	return ds
 }
+
+func (ds *dialstate) addStatic(n *discover.Node) {
+	ds.static[n.ID] = n
+}
+func (ds *dialstate) removeStatic(nId discover.NodeId) {
+	delete(ds.static, nId)
+}
+
 func (ds *dialstate) newTasks(nRunning int, peers map[discover.NodeId]Peer, now time.Time) []task {
 	var tasks []task
 	addDial := func(flag int, n *discover.Node) bool {

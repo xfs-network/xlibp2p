@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"errors"
 	"github.com/xfs-network/xlibp2p/discover"
@@ -20,6 +21,9 @@ const (
 
 
 type Server interface {
+	Peers() []Peer
+	AddPeer(node *discover.Node)
+	RemovePeer(node discover.NodeId)
 	Bind(p Protocol)
 	Start() error
 	Stop()
@@ -39,7 +43,10 @@ type server struct {
 	protocols []Protocol
 	close chan struct{}
 	addpeer chan *peerConn
+	addstatic chan *discover.Node
+	rmstatic chan discover.NodeId
 	delpeer chan Peer
+	peers map[discover.NodeId]Peer
 	table *discover.Table
 	logger log.Logger
 	lastLookup time.Time
@@ -114,6 +121,8 @@ func (srv *server) Start() error {
 	srv.running = true
 	// Peer to peer session entity
 	srv.addpeer = make(chan *peerConn)
+	srv.addstatic = make(chan *discover.Node)
+	srv.rmstatic = make(chan discover.NodeId)
 	srv.delpeer = make(chan Peer)
 	srv.close = make(chan struct{})
 	var err error
@@ -143,7 +152,7 @@ func (srv *server) Start() error {
 }
 
 func (srv *server) run(dialer *dialstate) {
-	peers := make(map[discover.NodeId]Peer)
+	srv.peers = make(map[discover.NodeId]Peer)
 	tasks := make([]task, 0)
 	pendingTasks := make([]task, 0)
 	taskdone := make(chan task)
@@ -178,14 +187,24 @@ func (srv *server) run(dialer *dialstate) {
 	}
 	for {
 		now := time.Now()
-		nt := dialer.newTasks(len(pendingTasks)+len(tasks), peers, now)
+		nt := dialer.newTasks(len(pendingTasks)+len(tasks), srv.peers, now)
 		// schedule tasks
 		scheduleTasks(nt)
 		select {
+		case n := <-srv.addstatic:
+			dialer.addStatic(n)
+		case n := <-srv.rmstatic:
+			dialer.removeStatic(n)
+			for k, v := range srv.peers {
+				if bytes.Equal(k[:], n[:]) {
+					v.Close()
+				}
+			}
+			delete(srv.peers, n)
 		// add peer
 		case c := <-srv.addpeer:
 			p := newPeer(c, srv.protocols, srv.config.Encoder)
-			peers[c.id] = p
+			srv.peers[c.id] = p
 			srv.logger.Infof("save peer id to peers: %s", c.id)
 			go srv.runPeer(p)
 		// task is done
@@ -194,7 +213,8 @@ func (srv *server) run(dialer *dialstate) {
 			delTask(t)
 		// delete peer
 		case p := <-srv.delpeer:
-			delete(peers, p.ID())
+			pId := p.ID()
+			delete(srv.peers, pId)
 		}
 	}
 }
@@ -248,6 +268,22 @@ func (srv *server) listenLoop(ln net.Listener) {
 		c := srv.newPeerConn(rw, flagInbound, nil)
 		go c.serve()
 	}
+}
+
+func (srv *server) AddPeer(node *discover.Node) {
+	srv.addstatic <- node
+}
+
+func (srv *server) Peers() []Peer {
+	tmp := make([]Peer, 0)
+	for _, v := range srv.peers {
+		tmp = append(tmp, v)
+	}
+	return tmp
+}
+
+func (srv *server) RemovePeer(nId discover.NodeId) {
+	srv.rmstatic <- nId
 }
 
 func (srv *server) newPeerConn(rw net.Conn, flag int, dst *discover.NodeId) *peerConn {

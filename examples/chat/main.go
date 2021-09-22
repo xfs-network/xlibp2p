@@ -21,6 +21,7 @@ import (
 
 type chatProtocol struct {
 	ps map[discover.NodeId]p2p.Peer
+	server p2p.Server
 }
 
 func (cp *chatProtocol) Run(p p2p.Peer) error {
@@ -32,7 +33,7 @@ func (cp *chatProtocol) Run(p p2p.Peer) error {
 	out:
 	for {
 		select {
-		case <-p.QuitCh():
+		case _ = <-p.CloseCh():
 			break out
 		default:
 		}
@@ -47,6 +48,8 @@ func (cp *chatProtocol) Run(p p2p.Peer) error {
 func (cp *chatProtocol) handleMsg(p p2p.Peer) error {
 	ch := p.GetProtocolMsgCh()
 	select {
+	case <- p.CloseCh():
+		return nil
 	case mr := <-ch:
 		if mr.Type() == 4 {
 			bs,_ := mr.ReadAll()
@@ -143,11 +146,31 @@ func input(fn func(string)) {
 	}
 }
 func chat(cp *chatProtocol, txt string) {
-	if txt == "/peers" {
-		for pId,_ := range cp.ps {
-			fmt.Printf("peer id: %s\n", pId)
+	if strings.HasPrefix(txt,"/") {
+		cs := strings.Split(txt[1:], " ")
+		command := cs[0]
+		if command == "peers" {
+			//ps := cp.server.Peers()
+			//for _,p := range ps {
+			//	fmt.Printf("peer id: %s\n", p.ID())
+			//}
+			for pId,_ := range cp.ps {
+				fmt.Printf("peer id: %s\n", pId)
+			}
+			return
+		}else if command == "addpeer" && len(cs) == 2 && cs[1] != "" {
+			n, err := discover.ParseNode(cs[1])
+			if err != nil {
+				fmt.Println("addperr err: ", err)
+			}
+			cp.server.AddPeer(n)
+		}else if command == "rmpeer" && len(cs) == 2 && cs[1] != "" {
+			//n, err := discover.ParseNode(cs[1])
+			//if err != nil {
+			//	fmt.Println("rmperr err: ", err)
+			//}
+			//cp.server.RemovePeer(n)
 		}
-		return
 	}
 	cp.sendMessage(txt)
 }
@@ -174,7 +197,9 @@ func main() {
 		MaxPeers: maxPeers,
 		Logger: logger,
 	})
-	cp := &chatProtocol{}
+	cp := &chatProtocol{
+		server: srv,
+	}
 	srv.Bind(cp)
 	if err := srv.Start(); err != nil {
 		panic(err)
