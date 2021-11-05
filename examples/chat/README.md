@@ -31,7 +31,7 @@ If it is not set, the local random port will be used by default.
 And then you need to create a new terminal program and start another node to connect to the master node
 
 ```shell
-./chat [-addr <your_listen_addr>] -bootstrap xfsnode://<main_node_ip>:<main_node_port>/id?=<main_node_id>
+./chat [-addr <your_listen_addr>] -bootstrap xfsnode://<main_node_ip>:<main_node_port>/?id=<main_node_id>
 ```
 
 Next, you can enter any character in the terminal of main node, such as "hello"
